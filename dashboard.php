@@ -47,6 +47,7 @@ if (!isset($_SESSION['user_id'])) {
             <ul class="nav-sidebar">
                 <li><a onclick="switchTab('overview')" class="tab-link active"><span>🏠</span> Overzicht</a></li>
                 <li><a onclick="switchTab('performance')" class="tab-link"><span>📊</span> Prestaties</a></li>
+                <li><a onclick="switchTab('keywords')" class="tab-link"><span>🔍</span> AI Research</a></li>
                 <li><a onclick="switchTab('onboarding')" class="tab-link"><span>🚀</span> Onboarding</a></li>
                 <li><a onclick="switchTab('billing')" class="tab-link"><span>💳</span> Facturatie</a></li>
                 <li><a onclick="switchTab('support')" class="tab-link"><span>🎧</span> Support</a></li>
@@ -104,6 +105,50 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </div>
 
+            <!-- TAB: AI KEYWORD RESEARCH -->
+            <div id="keywords" class="tab-content">
+                <div class="db-card" style="margin-bottom: 24px;">
+                    <h2 class="auth-title">AI <span class="gradient-text">Keyword Research</span></h2>
+                    <p class="auth-subtitle">Voer bir anahtar kelime girin ve AI'nın pazar niyetini analiz etmesini sağlayın.</p>
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 24px;">
+                        <input type="text" id="kw-input" placeholder="Bv: 'Schoenen kopen' veya 'Marketing ajansı'" 
+                               style="flex: 1; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--gray-200); font-family: inherit;">
+                        <button onclick="runAiResearch()" id="research-btn" class="btn btn-primary" style="padding: 0 30px;">
+                            Analyseer met AI
+                        </button>
+                    </div>
+                </div>
+
+                <div id="ai-loading" style="display: none; text-align: center; padding: 40px;">
+                    <div class="shimmer" style="height: 100px; border-radius: 20px; margin-bottom: 24px;"></div>
+                    <p class="gradient-text" style="font-weight: 700; font-size: 18px;">AI anahtar kelimeleri gruplandırıyor ve niyet analizi yapıyor...</p>
+                </div>
+
+                <div id="ai-results" style="display: none;">
+                    <div class="db-card" style="margin-bottom: 24px; border-left: 4px solid var(--primary);">
+                        <p id="ai-summary" style="font-weight: 500; color: var(--gray-700);"></p>
+                    </div>
+
+                    <div class="db-card">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="text-align: left; border-bottom: 2px solid var(--gray-100);">
+                                    <th style="padding: 12px; font-size: 14px; color: var(--gray-500);">Anahtar Kelime</th>
+                                    <th style="padding: 12px; font-size: 14px; color: var(--gray-500);">Hacim</th>
+                                    <th style="padding: 12px; font-size: 14px; color: var(--gray-500);">T. CPC</th>
+                                    <th style="padding: 12px; font-size: 14px; color: var(--gray-500);">AI Intent</th>
+                                    <th style="padding: 12px; font-size: 14px; color: var(--gray-500);">AI Önerisi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kw-table-body">
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- More tabs can be implemented similarly... -->
         </main>
     </div>
@@ -142,6 +187,57 @@ if (!isset($_SESSION['user_id'])) {
                     }]
                 }
             });
+        }
+
+        // AI Research Logic
+        async function runAiResearch() {
+            const keyword = document.getElementById('kw-input').value;
+            if(!keyword) return alert('Lütfen bir kelime girin');
+
+            const btn = document.getElementById('research-btn');
+            const loading = document.getElementById('ai-loading');
+            const results = document.getElementById('ai-results');
+            const tableBody = document.getElementById('kw-table-body');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const res = await fetch('api/keyword_research.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword })
+                });
+                const data = await res.json();
+
+                if(data.success) {
+                    document.getElementById('ai-summary').textContent = data.summary;
+                    tableBody.innerHTML = '';
+                    
+                    data.results.forEach(item => {
+                        const row = `
+                            <tr style="border-bottom: 1px solid var(--gray-100);">
+                                <td style="padding: 16px 12px; font-weight: 600;">${item.keyword}</td>
+                                <td style="padding: 16px 12px;">${item.volume}</td>
+                                <td style="padding: 16px 12px;">${item.cpc}</td>
+                                <td style="padding: 16px 12px;">
+                                    <span class="status-badge" style="background: var(--blue-50); color: var(--primary);">${item.intent}</span>
+                                </td>
+                                <td style="padding: 16px 12px; font-size: 13px; color: var(--gray-600);">${item.ai_suggestion}</td>
+                            </tr>
+                        `;
+                        tableBody.insertAdjacentHTML('beforeend', row);
+                    });
+
+                    results.style.display = 'block';
+                }
+            } catch (err) {
+                alert('Analiz sırasında bir hata oluştu.');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
