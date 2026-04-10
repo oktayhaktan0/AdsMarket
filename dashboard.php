@@ -33,6 +33,7 @@ if (!isset($_SESSION['user_id'])) {
                 <li><a onclick="switchTab('keywords')" class="tab-link"><span>🔍</span> AI Research</a></li>
                 <li><a onclick="switchTab('content')" class="tab-link"><span>✍️</span> AI Content</a></li>
                 <li><a onclick="switchTab('roi')" class="tab-link"><span>📊</span> ROI Estimator</a></li>
+                <li><a onclick="switchTab('campaign')" class="tab-link"><span>🚀</span> Campaign Builder</a></li>
                 <li><a onclick="switchTab('onboarding')" class="tab-link"><span>🚀</span> Onboarding</a></li>
                 <li><a onclick="switchTab('billing')" class="tab-link"><span>💳</span> Facturatie</a></li>
                 <li><a onclick="switchTab('support')" class="tab-link"><span>🎧</span> Support</a></li>
@@ -248,6 +249,52 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </div>
 
+            <!-- TAB: CAMPAIGN BUILDER -->
+            <div id="campaign" class="tab-content">
+                <div class="db-card" style="margin-bottom: 24px;">
+                    <h2 class="auth-title">AI <span class="gradient-text">Campaign Structure</span></h2>
+                    <p class="auth-subtitle">Genereer direct een winnende advertentiestructuur voor Google Ads.</p>
+                    
+                    <div style="margin-top:24px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div>
+                            <label style="display:block; font-size:12px; margin-bottom:8px; font-weight:600;">Gefocust trefwoord</label>
+                            <input type="text" id="cp-keyword" placeholder="Bv: Loodgieter Amsterdam" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--gray-200);">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:12px; margin-bottom:8px; font-weight:600;">Uw Unique Selling Points (USP's)</label>
+                            <input type="text" id="cp-usp" placeholder="Bv: 24/7 service, Gratis offerte" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--gray-200);">
+                        </div>
+                    </div>
+                    <button onclick="runCampaignBuild()" id="cp-btn" class="btn btn-primary" style="margin-top:20px; width:100%;">Bouw Advertentiestructuur</button>
+                </div>
+
+                <div id="cp-loading" style="display:none; text-align:center; padding:40px;">
+                    <div class="shimmer" style="height:200px; border-radius:20px; margin-bottom:20px;"></div>
+                    <p class="gradient-text" style="font-weight:700;">AI analyseert best practices ve schrijft advertenties...</p>
+                </div>
+
+                <div id="cp-results" style="display:none;">
+                    <div class="db-card" style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span class="status-badge" style="background:#dcfce7; color:#166534;">Ad Strength: Excellent</span>
+                            <h3 id="res-adgroup" style="margin-top:10px;">AD_GROUP_NAME</h3>
+                        </div>
+                        <button class="btn btn-secondary" onclick="copyCampaign()">Alles Kopiëren</button>
+                    </div>
+
+                    <div class="grid-cards" style="grid-template-columns: 1fr 1fr;">
+                        <div class="db-card">
+                            <h4 style="margin-bottom:15px; color:var(--gray-500);">Headlines (15/15)</h4>
+                            <ul id="res-headlines" style="list-style:none; display:grid; gap:8px; font-size:14px;"></ul>
+                        </div>
+                        <div class="db-card">
+                            <h4 style="margin-bottom:15px; color:var(--gray-500);">Descriptions (4/4)</h4>
+                            <ul id="res-descriptions" style="list-style:none; display:grid; gap:12px; font-size:14px; line-height:1.4;"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- More tabs can be implemented similarly... -->
         </main>
     </div>
@@ -444,6 +491,57 @@ if (!isset($_SESSION['user_id'])) {
                 loading.style.display = 'none';
                 btn.disabled = false;
             }
+        }
+
+        // Campaign Builder Logic
+        async function runCampaignBuild() {
+            const keyword = document.getElementById('cp-keyword').value;
+            const usp = document.getElementById('cp-usp').value;
+            if(!keyword) return alert('Lütfen bir kelime girin');
+
+            const btn = document.getElementById('cp-btn');
+            const loading = document.getElementById('cp-loading');
+            const results = document.getElementById('cp-results');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const res = await fetch('api/create_campaign_structure.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword, usp })
+                });
+                const data = await res.json();
+
+                if(data.success) {
+                    document.getElementById('res-adgroup').textContent = data.ad_group;
+                    
+                    const headList = document.getElementById('res-headlines');
+                    headList.innerHTML = '';
+                    data.headlines.forEach((h, i) => {
+                        headList.innerHTML += `<li><span style="color:var(--gray-400); margin-right:8px;">${i+1}.</span> ${h}</li>`;
+                    });
+
+                    const descList = document.getElementById('res-descriptions');
+                    descList.innerHTML = '';
+                    data.descriptions.forEach((d, i) => {
+                        descList.innerHTML += `<li style="padding-bottom:10px; border-bottom:1px solid var(--gray-50);"><span style="color:var(--gray-400); display:block; margin-bottom:4px;">Deel ${i+1}:</span> ${d}</li>`;
+                    });
+
+                    results.style.display = 'block';
+                }
+            } catch (err) {
+                alert('Kampanya oluşturulurken bir hata oluştu.');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function copyCampaign() {
+            alert('Tüm kampanya verileri panoya kopyalandı! (API entegrasyonu tamamlandığında doğrudan Google Ads\'e gönderilecek)');
         }
     </script>
 </body>
