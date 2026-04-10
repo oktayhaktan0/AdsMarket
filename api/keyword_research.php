@@ -5,6 +5,7 @@
  */
 header('Content-Type: application/json');
 require_once 'config.php';
+require_once 'lib/AiEngine.php';
 
 session_start();
 if (!isset($_SESSION['user_id'])) {
@@ -12,6 +13,11 @@ if (!isset($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Yetkisiz erişim.']);
     exit;
 }
+
+$ai = new AiEngine(
+    defined('OPENAI_API_KEY') ? OPENAI_API_KEY : null,
+    defined('ANTHROPIC_API_KEY') ? ANTHROPIC_API_KEY : null
+);
 
 // Get raw POST data
 $input = json_decode(file_get_contents('php://input'), true);

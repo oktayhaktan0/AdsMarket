@@ -18,24 +18,7 @@ if (!isset($_SESSION['user_id'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        .dashboard-layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
-        .sidebar { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-right: 1px solid var(--gray-200); padding: 40px 24px; position: sticky; top: 0; height: 100vh; z-index: 100; }
-        .main-content { background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.05), transparent), radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.05), transparent), var(--gray-50); padding: 40px; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Grid and Metric Cards preserved from dash.html */
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 24px; }
-        .db-card { background: var(--white); padding: 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); }
-        .metric-value { font-size: 32px; font-weight: 800; color: var(--gray-900); }
-        .status-badge { padding: 6px 16px; border-radius: 50px; font-size: 12px; font-weight: 700; }
-        .status-active { background: #d1fae5; color: #065f46; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .nav-sidebar { list-style: none; margin-top: 40px; }
-        .nav-sidebar a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: var(--gray-600); text-decoration: none; transition: 0.3s; cursor: pointer; }
-        .nav-sidebar a.active, .nav-sidebar a:hover { background: var(--primary-gradient); color: var(--white); }
-    </style>
+
 </head>
 
 <body>
