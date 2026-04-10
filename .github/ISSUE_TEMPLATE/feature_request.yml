@@ -9,7 +9,7 @@ body:
       placeholder: I wish AdsMarket could...
     validations:
       required: true
-  - type: textarea
+   type: textarea
     id: logic
     attributes:
       label: Rationale
