@@ -29,6 +29,23 @@ AdsMarket is a premium SaaS platform designed to bridge the gap between complex 
 
 ---
 
+## 📂 Project Structure
+
+```bash
+├── api/                  # Backend Logic & Endpoints
+│   ├── lib/              # Core Libraries (AiEngine, etc.)
+│   ├── keyword_research.php
+│   ├── generate_blog.php
+│   └── roi_estimator.php
+├── includes/             # Shared UI Components (Header/Footer)
+├── assets/               # Static JS/CSS Bundles
+├── premium-effects.css   # High-end UI Animations
+├── dashboard.php         # Main SaaS Client Interface
+└── index.php             # Landing Page
+```
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
