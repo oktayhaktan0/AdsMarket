@@ -32,6 +32,7 @@ if (!isset($_SESSION['user_id'])) {
                 <li><a onclick="switchTab('performance')" class="tab-link"><span>📊</span> Prestaties</a></li>
                 <li><a onclick="switchTab('keywords')" class="tab-link"><span>🔍</span> AI Research</a></li>
                 <li><a onclick="switchTab('content')" class="tab-link"><span>✍️</span> AI Content</a></li>
+                <li><a onclick="switchTab('roi')" class="tab-link"><span>📊</span> ROI Estimator</a></li>
                 <li><a onclick="switchTab('onboarding')" class="tab-link"><span>🚀</span> Onboarding</a></li>
                 <li><a onclick="switchTab('billing')" class="tab-link"><span>💳</span> Facturatie</a></li>
                 <li><a onclick="switchTab('support')" class="tab-link"><span>🎧</span> Support</a></li>
@@ -186,6 +187,67 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </div>
 
+            <!-- TAB: ROI ESTIMATOR -->
+            <div id="roi" class="tab-content">
+                <div class="grid-cards">
+                    <div class="db-card">
+                        <h2 class="auth-title">ROI <span class="gradient-text">Projection Tool</span></h2>
+                        <p class="auth-subtitle">Bereken uw verwachte winst en schaal uw campagnes met AI data.</p>
+                        
+                        <div style="margin-top:24px; display:grid; gap:20px;">
+                            <div>
+                                <label style="display:block; font-size:12px; margin-bottom:8px; font-weight:600;">Maandelijks Budget (€)</label>
+                                <input type="number" id="roi-budget" value="1000" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--gray-200);">
+                            </div>
+                            <div>
+                                <label style="display:block; font-size:12px; margin-bottom:8px; font-weight:600;">Sektor</label>
+                                <select id="roi-industry" style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--gray-200);">
+                                    <option value="E-commerce">E-commerce</option>
+                                    <option value="B2B SaaS">B2B SaaS</option>
+                                    <option value="Real Estate">Real Estate</option>
+                                    <option value="Legal">Legal</option>
+                                    <option value="General">Algemeen</option>
+                                </select>
+                            </div>
+                            <button onclick="runRoiEstimate()" id="roi-btn" class="btn btn-primary">Bereken ROI Projeksiyonu</button>
+                        </div>
+                    </div>
+
+                    <div class="db-card">
+                        <h3>AI <span class="gradient-text">Performance İnsight</span></h3>
+                        <div id="roi-loading" style="display:none; padding:20px; text-align:center;">
+                            <div class="spinner" style="margin:0 auto 15px;"></div>
+                            <p style="font-size:14px; color:var(--gray-500);">AI piyasa verilerini analiz ediyor...</p>
+                        </div>
+                        <div id="roi-placeholder" style="padding:40px; text-align:center; color:var(--gray-400);">
+                            <p>Analyseer uw bütçe om inzichten te krijgen.</p>
+                        </div>
+                        <div id="roi-insight-box" style="display:none;">
+                            <div style="background:var(--gray-50); padding:15px; border-radius:12px; border-left:4px solid var(--primary); margin-bottom:15px;">
+                                <p id="roi-insight-text" style="font-size:14px; color:var(--gray-700);"></p>
+                            </div>
+                            <div class="grid-cards" style="grid-template-columns: 1fr 1fr; gap:10px;">
+                                <div style="background:var(--white); padding:15px; border-radius:12px; border:1px solid var(--gray-100);">
+                                    <span style="font-size:10px; color:var(--gray-400);">HEDEF ROI</span>
+                                    <h4 id="res-roi-val" class="gradient-text" style="font-size:20px; margin:0;"></h4>
+                                </div>
+                                <div style="background:var(--white); padding:15px; border-radius:12px; border:1px solid var(--gray-100);">
+                                    <span style="font-size:10px; color:var(--gray-400);">EST. REVENUE</span>
+                                    <h4 id="res-roi-rev" style="font-size:20px; margin:0; color:var(--gray-900);"></h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="roi-chart-card" class="db-card" style="margin-top:24px; display:none;">
+                    <h3>6 Maanden <span class="gradient-text">Groei Projeksiyonu</span></h3>
+                    <div style="height:350px; margin-top:20px;">
+                        <canvas id="roiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- More tabs can be implemented similarly... -->
         </main>
     </div>
@@ -318,6 +380,70 @@ if (!isset($_SESSION['user_id'])) {
             const content = document.getElementById('res-blog-content').innerText;
             navigator.clipboard.writeText(content);
             alert('Tekst gekopieerd naar klerbord!');
+        }
+
+        // ROI Estimation Logic
+        let myRoiChart = null;
+
+        async function runRoiEstimate() {
+            const budget = document.getElementById('roi-budget').value;
+            const industry = document.getElementById('roi-industry').value;
+            
+            const btn = document.getElementById('roi-btn');
+            const loading = document.getElementById('roi-loading');
+            const placeholder = document.getElementById('roi-placeholder');
+            const insightBox = document.getElementById('roi-insight-box');
+            const chartCard = document.getElementById('roi-chart-card');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            placeholder.style.display = 'none';
+            insightBox.style.display = 'none';
+            chartCard.style.display = 'none';
+
+            try {
+                const res = await fetch('api/roi_estimator.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ budget, industry })
+                });
+                const data = await res.json();
+
+                if(data.success) {
+                    document.getElementById('roi-insight-text').textContent = data.ai_insight;
+                    document.getElementById('res-roi-val').textContent = data.projection.roi;
+                    document.getElementById('res-roi-rev').textContent = data.projection.revenue;
+                    
+                    insightBox.style.display = 'block';
+                    chartCard.style.display = 'block';
+
+                    // Update Chart
+                    if(myRoiChart) myRoiChart.destroy();
+                    const ctx = document.getElementById('roiChart').getContext('2d');
+                    myRoiChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.chart.labels,
+                            datasets: [{
+                                label: 'Est. Maandelijkse Omzet (€)',
+                                data: data.chart.values,
+                                backgroundColor: '#2563eb',
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } }
+                        }
+                    });
+                }
+            } catch (err) {
+                alert('ROI analizi sırasında bir hata oluştu.');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
