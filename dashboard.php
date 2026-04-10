@@ -48,6 +48,7 @@ if (!isset($_SESSION['user_id'])) {
                 <li><a onclick="switchTab('overview')" class="tab-link active"><span>🏠</span> Overzicht</a></li>
                 <li><a onclick="switchTab('performance')" class="tab-link"><span>📊</span> Prestaties</a></li>
                 <li><a onclick="switchTab('keywords')" class="tab-link"><span>🔍</span> AI Research</a></li>
+                <li><a onclick="switchTab('content')" class="tab-link"><span>✍️</span> AI Content</a></li>
                 <li><a onclick="switchTab('onboarding')" class="tab-link"><span>🚀</span> Onboarding</a></li>
                 <li><a onclick="switchTab('billing')" class="tab-link"><span>💳</span> Facturatie</a></li>
                 <li><a onclick="switchTab('support')" class="tab-link"><span>🎧</span> Support</a></li>
@@ -149,6 +150,59 @@ if (!isset($_SESSION['user_id'])) {
                 </div>
             </div>
 
+            <!-- TAB: AI CONTENT GENERATOR -->
+            <div id="content" class="tab-content">
+                <div class="db-card" style="margin-bottom: 24px;">
+                    <h2 class="auth-title">AI <span class="gradient-text">SEO Content Creator</span></h2>
+                    <p class="auth-subtitle">Genereer binnen enkele seconden SEO-geoptimaliseerde blogposts ve advertentieteksten.</p>
+                    
+                    <div style="margin-top: 24px; display: grid; gap: 20px;">
+                        <div>
+                            <label style="display:block; font-size:14px; margin-bottom:8px; font-weight:600;">Onderwerp / Titel</label>
+                            <input type="text" id="blog-topic" placeholder="Bv: 'De toekomst van Google Ads'" 
+                                   style="width: 100%; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--gray-200);">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:14px; margin-bottom:8px; font-weight:600;">Focus Keywords (Optioneel)</label>
+                            <input type="text" id="blog-keywords" placeholder="Bv: marketing, automation, cpc" 
+                                   style="width: 100%; padding: 14px 20px; border-radius: 12px; border: 1px solid var(--gray-200);">
+                        </div>
+                        <button onclick="runAiBlogGen()" id="blog-btn" class="btn btn-primary" style="padding: 16px;">
+                            Genereer Artikel met Claude 3.5
+                        </button>
+                    </div>
+                </div>
+
+                <div id="blog-loading" style="display: none; text-align: center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto 20px;"></div>
+                    <p class="gradient-text" style="font-weight: 700;">AI schrijft uw artikel... Dit duurt ongeveer 5-10 seconden.</p>
+                </div>
+
+                <div id="blog-results" style="display: none;">
+                    <div class="grid-cards">
+                        <div class="db-card" style="grid-column: span 2;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h3 id="res-blog-title">Artikel Voorbeeld</h3>
+                                <button class="btn btn-secondary btn-small" onclick="copyBlog()">Kopieer Tekst</button>
+                            </div>
+                            <div id="res-blog-content" style="background:#f8fafc; padding:30px; border-radius:12px; border:1px solid var(--gray-200); line-height:1.8;">
+                                <!-- Content injected here -->
+                            </div>
+                        </div>
+                        <div class="db-card">
+                            <h3>SEO Meta Data</h3>
+                            <div style="margin-top:20px;">
+                                <label style="font-size:12px; color:var(--gray-500);">Meta Title</label>
+                                <p id="res-meta-title" style="font-size:14px; font-weight:600; margin-bottom:15px;"></p>
+                                
+                                <label style="font-size:12px; color:var(--gray-500);">Meta Description</label>
+                                <p id="res-meta-desc" style="font-size:14px; line-height:1.4;"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- More tabs can be implemented similarly... -->
         </main>
     </div>
@@ -238,6 +292,49 @@ if (!isset($_SESSION['user_id'])) {
                 loading.style.display = 'none';
                 btn.disabled = false;
             }
+        }
+
+        // AI Blog Generation Logic
+        async function runAiBlogGen() {
+            const topic = document.getElementById('blog-topic').value;
+            const keywords = document.getElementById('blog-keywords').value;
+            if(!topic) return alert('Lütfen bir konu girin');
+
+            const btn = document.getElementById('blog-btn');
+            const loading = document.getElementById('blog-loading');
+            const results = document.getElementById('blog-results');
+
+            btn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const res = await fetch('api/generate_blog.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, keywords })
+                });
+                const data = await res.json();
+
+                if(data.success) {
+                    document.getElementById('res-blog-title').textContent = data.title;
+                    document.getElementById('res-blog-content').innerHTML = data.content;
+                    document.getElementById('res-meta-title').textContent = data.meta.title;
+                    document.getElementById('res-meta-desc').textContent = data.meta.description;
+                    results.style.display = 'block';
+                }
+            } catch (err) {
+                alert('İçerik üretilirken bir hata oluştu.');
+            } finally {
+                loading.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function copyBlog() {
+            const content = document.getElementById('res-blog-content').innerText;
+            navigator.clipboard.writeText(content);
+            alert('Tekst gekopieerd naar klerbord!');
         }
     </script>
 </body>
